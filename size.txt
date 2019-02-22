@@ -1,0 +1,2 @@
+   text	   data	    bss	    dec	    hex	filename
+  35396	   3440	   5580	  44416	   ad80	../Fuck.elf
