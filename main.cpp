@@ -3,18 +3,28 @@
 #include <FEHUtility.h>
 #include <FEHMotor.h>
 #include <FEHRPS.h>
+#include <FEHServo.h>
 #include <cstdlib>
 
-AnalogInputPin cds(FEHIO::P0_3);
+AnalogInputPin cds(FEHIO::P1_0);
 FEHMotor right_motor(FEHMotor::Motor0,9);
 FEHMotor left_motor(FEHMotor::Motor1,9);
 DigitalEncoder right_encoder(FEHIO::P0_0);
 DigitalEncoder left_encoder(FEHIO::P0_7);
+FEHServo coin_servo(FEHServo::Servo0);
+FEHServo foos_servo(FEHServo::Servo1);
 
 float light = 1.7;
 double encInch = 40.5;
 int turnSpeed = 35;
 float initHeading = 0;
+float coinServoMax = 2300;
+float coinServoMin = 500;
+float foosServoMax = 2450;
+float foosServoMin = 1192;
+
+int coinX = 0;
+int coinY = 0;
 
 struct data{
     int leftEncoder;
@@ -22,11 +32,12 @@ struct data{
     int leftSpeed;
     int rightSpeed;
     int totalTicks;
-    int RPSx ;
-    int RPSy;
-    int heading ;
-    int expectedHeading;
-    int error;
+    double RPSx ;
+    double RPSy;
+    double heading ;
+    double expectedHeading;
+    double error;
+    double cdsVal;
 };
 
 void resetCounts() {
@@ -50,6 +61,8 @@ void writeScreen(data printData){
     LCD.WriteRC(printData.expectedHeading, 9,120);
     LCD.WriteRC("Error: ",10,0 );
     LCD.WriteRC(printData.error,10,120);
+    LCD.WriteRC("CDS VAL: ", 11,0);
+    LCD.WriteRC(printData.cdsVal,11,120);
 
 }
 
@@ -135,6 +148,34 @@ float CDS() {
 
     return value;
 }
+void turnBoth(float angle){
+    float circ = 3.1415*6.75;
+
+
+
+    resetCounts();
+    if(angle > 0){
+        right_motor.SetPercent(-20);
+        left_motor.SetPercent(20);
+    }else{
+        right_motor.SetPercent(20);
+        left_motor.SetPercent(-20);
+        angle = -angle;
+    }
+    float counts = ((angle/360) * circ) * encInch;
+    while(right_encoder.Counts() < counts || left_encoder.Counts() < counts) {
+            if(right_encoder.Counts() >= counts) {
+                right_motor.Stop();
+            }
+            if(left_encoder.Counts() >= counts) {
+                left_motor.Stop();
+            }
+        }
+
+    right_motor.Stop();
+    left_motor.Stop();
+
+}
 
 void turnRight(float angle) {
     float circ = 3.14159 * (2*6.75);
@@ -182,22 +223,25 @@ void turnLeft(float angle) {
 }
 
 void turnLeftRPS(float angle){
+    if(RPS.Heading() > 0){
+        initHeading = RPS.Heading();
+    }
     turnLeft(angle);
     float adjustedAngle = initHeading + angle;
     if(adjustedAngle < 0){
-      adjustedAngle = 360 - adjustedAngle;
-    }else if(adjustedAngle >= 360){
+      adjustedAngle = 360 + adjustedAngle;
+    }else if(adjustedAngle > 360){
       adjustedAngle = adjustedAngle - 360;
     }
       data printdata;
     while((adjustedAngle > (RPS.Heading() +1.5))||(adjustedAngle < (RPS.Heading()-1.5))){
         if(adjustedAngle > (RPS.Heading()+1)){
-            turnLeft(1);
+            turnLeft(.5);
             printdata.heading = RPS.Heading();
             printdata.expectedHeading = adjustedAngle;
             writeScreen(printdata);
         }else if(adjustedAngle < (RPS.Heading() -1)){
-            turnLeft(-1);
+            turnLeft(-.5);
             printdata.heading = RPS.Heading();
             printdata.expectedHeading = adjustedAngle;
             writeScreen(printdata);
@@ -207,22 +251,25 @@ void turnLeftRPS(float angle){
 
 }
 void turnRightRPS(float angle){
+    if(RPS.Heading() > 0){
+        initHeading = RPS.Heading();
+    }
     turnRight(angle);
-    float adjustedAngle = initHeading + angle;
+    float adjustedAngle = initHeading - angle;
     if(adjustedAngle < 0){
-      adjustedAngle = 360 - adjustedAngle;
-    }else if(adjustedAngle >= 360){
+      adjustedAngle = 360 + adjustedAngle;
+    }else if(adjustedAngle > 360){
       adjustedAngle = adjustedAngle - 360;
     }
     data printdata;
     while((adjustedAngle> RPS.Heading() +1.5)||(adjustedAngle<RPS.Heading()-1.5)){
         if(adjustedAngle > (RPS.Heading()+1)){
-            turnRight(-1);
+            turnRight(-.5);
             printdata.heading = RPS.Heading();
             printdata.expectedHeading = adjustedAngle;
             writeScreen(printdata);
         }else if(adjustedAngle < (RPS.Heading() -1)){
-            turnRight(1);
+            turnRight(.5);
             printdata.heading = RPS.Heading();
             printdata.expectedHeading = adjustedAngle;
             writeScreen(printdata);
@@ -231,74 +278,179 @@ void turnRightRPS(float angle){
     }
 
 }
+void coinFinder(){
+    bool posFound = false;
+    while(!posFound){
+        //x and y to control on
+        int initX = RPS.X();
+        int initY = RPS.Y();
+
+
+    }
+}
+
+void initialize(){
+    foos_servo.SetMin((int)foosServoMin);
+    foos_servo.SetMax((int)foosServoMax);
+    foos_servo.SetDegree(50);
+    coin_servo.SetMin((int)coinServoMin);
+    coin_servo.SetMax((int)coinServoMax);
+    coin_servo.SetDegree(20);
+    RPS.InitializeTouchMenu();
+    LCD.Clear();
+    LCD.SetBackgroundColor(WHITE);
+    LCD.SetFontColor(BLACK);
+    CDS();
+
+}
 
 int main(void)
 {
-  RPS.InitializeTouchMenu();
 
-  LCD.Clear();
-  LCD.SetBackgroundColor(WHITE);
-  LCD.SetFontColor(BLACK);
-  CDS();
-  initHeading = RPS.Heading();
- //Distances specified in tenths of an inch.
-  turnLeftRPS(135);
-  //turnRight(120);
 
- driveStraightDistance(10,30);
- driveStraightDistance(210,-30);
- while(cds.Value() > 1.2){
-     left_motor.SetPercent(-20);
-     right_motor.SetPercent(-20);
- }
- left_motor.Stop();
- right_motor.Stop();
- float light_value = cds.Value();
- driveStraightDistance(70,-30);
- if(light_value>.4){
-  turnLeft(50);
-  Sleep(5.0);
- }else{
-  driveStraightDistance(40,30);
-  turnLeft(50);
-  Sleep(5.0);
- }
- initHeading = RPS.Heading();
 
- turnLeftRPS(-50);
- turnRightRPS(90);
- driveStraightDistance(300, 50);
+    initialize();
+    initHeading = RPS.Heading();
+    float timeStart = TimeNow();
+    while(initHeading == -1 || initHeading == -2||TimeNow() - timeStart == 15){
+        initHeading = RPS.Heading();
+    }
+
+    //DDr
+    driveStraightDistance(2,15);
+    turnLeft(135);
+    driveStraightDistance(10,70);
+    //driveStraightDistance(10,-30);
+    float lightVal = 3.00;
+    driveStraightDistance(360,-40);
+
+    driveStraightDistance(4,20);
+
+    data printdata;
+    /*
+    while(lightVal > 2.5){
+        lightVal = cds.Value();
+        driveStraightDistance(1,20);
+
+        printdata.cdsVal = lightVal;
+
+        writeScreen(printdata);
+    }
+ */
+    driveStraightDistance(20,-40);
+    if(true){
+        driveStraightDistance(10,15);
+        turnRightRPS(90);
+        driveStraightDistance(320,-40);
+        driveStraightDistance(80,40);
+    }else{
+        driveStraightDistance(87,30);
+        turnBoth(90);
+        driveStraightDistance(300,-40);
+        driveStraightDistance(30,30);
+        turnRightRPS(90);
+        driveStraightDistance(30,-30);
+        turnLeftRPS(45);
+        driveStraightDistance(13,30);
+        turnLeftRPS(45);
+        //turnBoth(-90);
+    }
+    LCD.Clear();
+    LCD.WriteRC("END OF DDR",0,0);
+    Sleep(1.0);
+    //Lined up at the bottom of ramp
+    bool rampCheck = true;
+    int checks = 0;
+
+
+    driveStraightDistance(358,50);
+   while(rampCheck){
+        driveStraightDistance(5,50);
+
+        if(RPS.Y() < 0){
+            rampCheck = false;
+        }
+    }
+    //drive to the wall
+    turnLeft(90);
+    driveStraightDistance(50,-50);
+    driveStraightDistance(38,30);
+    foos_servo.SetDegree(176);
+    foos_servo.SetDegree(168);
+    Sleep(200);
+    left_motor.SetPercent(30);
+    right_motor.SetPercent(46);
+    Sleep(1.6);
+    left_motor.Stop();
+    right_motor.Stop();
+    left_encoder.ResetCounts();
+    right_encoder.ResetCounts();
+    Sleep(500);
+    //driveStraightDistance(80,35);
+    foos_servo.SetDegree(20);
+    driveStraightDistance(200,-40);
+
+
+
+    //driveStraightDistance(50,30);
+    turnLeft(90);
+    driveStraightDistance(30,40);
+    turnLeft(20);
+    driveStraightDistance(400,50);
+    turnLeft(-65);
+    driveStraightDistance(400,50);
+
+
+
+
+
+
+
 
   /*
-   driveStraightDistance(44,30);
-   turnRight(80);
-   driveStraightDistance(52,-30);
-   turnLeft(-74.5);
-   driveStraightDistance(68,-30);
-   turnRight(-70);
-   driveStraightDistance(35,30);
-    */
 
-  /*
   turnLeft(70);
-  driveStraightDistance(20,30);
-  turnRight(35);
-  driveStraightDistance(280,60);
-  driveStraightDistance(80, -20);
-  driveStraightDistance(160, 40);
-  turnRight(24);
-  driveStraightDistance(10,30);
-  turnRight(4);
-  driveStraightDistance(40,50);
-  driveStraightDistance(70,-50);
-  turnRight(-24);
-  driveStraightDistance(20,-30);
-  turnRight(-4);
-  driveStraightDistance(10,-30);
-  turnRight(-5);
-  driveStraightDistance(130,-50);
-  driveStraightDistance(200,-55);
-    */
+  driveStraightDistance(70,50);
+  //driveStraightDistance(10,-30);
+  turnRight(25);
+  driveStraightDistance(200,60);
+  driveStraightDistance(50,-20);
+  driveStraightDistance(40,30);
+  turnRight(90);
+  driveStraightDistance(60,50);
+  turnLeft(-90);
+
+  driveStraightDistance(210,30);
+  //turnBoth(270);
+  //driveStraightDistance(40,20);
+  coin_servo.SetDegree(122);
+  Sleep(1.0);
+  driveStraightDistance(60,-30);
+  turnBoth(140);
+  driveStraightDistance(30,50);
+  turnBoth(65);
+  driveStraightDistance(30,40);
+  turnRight(40);
+  driveStraightDistance(60,40);
+
+  coin_servo.SetDegree(20);
+
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
