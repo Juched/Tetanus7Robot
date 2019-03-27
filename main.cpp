@@ -5,6 +5,7 @@
 #include <FEHRPS.h>
 #include <FEHServo.h>
 #include <cstdlib>
+#include <math.h>
 
 AnalogInputPin cds(FEHIO::P1_0);
 FEHMotor right_motor(FEHMotor::Motor0,9);
@@ -17,11 +18,16 @@ FEHServo foos_servo(FEHServo::Servo1);
 float light = 1.7;
 double encInch = 40.5;
 int turnSpeed = 35;
-float initHeading = 0;
+float currHeading = 0;
 float coinServoMax = 2300;
 float coinServoMin = 500;
 float foosServoMax = 2450;
 float foosServoMin = 1192;
+float initHeading = 0;
+float DDRY = -1;
+float DDRX = -1;
+float DDRHeading = 90;
+
 
 int coinX = 0;
 int coinY = 0;
@@ -224,10 +230,10 @@ void turnLeft(float angle) {
 
 void turnLeftRPS(float angle){
     if(RPS.Heading() > 0){
-        initHeading = RPS.Heading();
+        currHeading = RPS.Heading();
     }
     turnLeft(angle);
-    float adjustedAngle = initHeading + angle;
+    float adjustedAngle = currHeading + angle;
     if(adjustedAngle < 0){
       adjustedAngle = 360 + adjustedAngle;
     }else if(adjustedAngle > 360){
@@ -252,10 +258,10 @@ void turnLeftRPS(float angle){
 }
 void turnRightRPS(float angle){
     if(RPS.Heading() > 0){
-        initHeading = RPS.Heading();
+        currHeading = RPS.Heading();
     }
     turnRight(angle);
-    float adjustedAngle = initHeading - angle;
+    float adjustedAngle = currHeading - angle;
     if(adjustedAngle < 0){
       adjustedAngle = 360 + adjustedAngle;
     }else if(adjustedAngle > 360){
@@ -297,11 +303,69 @@ void initialize(){
     coin_servo.SetMax((int)coinServoMax);
     coin_servo.SetDegree(20);
     RPS.InitializeTouchMenu();
+    LCD.SetBackgroundColor(WHITE);
+    LCD.SetFontColor(BLACK);
+    LCD.Clear();
+    float x, y;
+
+    while(LCD.Touch(&x,&y)) {}
+
+    while(!LCD.Touch(&x,&y)){
+        DDRX = RPS.X();
+        DDRY = RPS.Y();
+        DDRHeading = RPS.Heading();
+        LCD.WriteRC(DDRX, 0, 0);
+        LCD.WriteRC(DDRY,1,0);
+        LCD.WriteRC(DDRHeading, 2,0);
+    }
+
+    Sleep(.1);
+    while(LCD.Touch(&x,&y)) {
+        LCD.WriteLine("waiting for touch");
+    }
+
+    Sleep(.1);
+    while(!LCD.Touch(&x,&y));
+    Sleep(1.0);
+    while(LCD.Touch(&x,&y)) {
+        LCD.WriteLine("waiting for touch");
+    }
+
+    Sleep(1.0);
+    while(!LCD.Touch(&x,&y));
+
     LCD.Clear();
     LCD.SetBackgroundColor(WHITE);
     LCD.SetFontColor(BLACK);
+    LCD.WriteLine("ready");
     CDS();
 
+}
+
+void DDRRPS () {
+    float currX = RPS.X();
+    float currY = RPS.Y();
+
+    while(currX < DDRX-2.5) {
+        currX = RPS.X();
+        currY = RPS.Y();
+
+        driveStraightDistance(5,-35);
+
+        if(fabs((currY - DDRY)) > .25) {
+            if(currY > DDRY) {
+                turnLeft(.2);
+                driveStraightDistance(3,-15);
+                turnRight(.2);
+            }
+            else {
+
+                turnRight(.2);
+                driveStraightDistance(3,-15);
+                turnLeft(.2);
+            }
+        }
+    }
 }
 
 int main(void)
@@ -310,16 +374,22 @@ int main(void)
 
 
     initialize();
-    initHeading = RPS.Heading();
+    currHeading = RPS.Heading();
+    initHeading = currHeading;
     float timeStart = TimeNow();
-    while(initHeading == -1 || initHeading == -2||TimeNow() - timeStart == 15){
-        initHeading = RPS.Heading();
+    while(currHeading == -1 || currHeading == -2||TimeNow() - timeStart == 15){
+        currHeading = RPS.Heading();
     }
 
     //DDr
     driveStraightDistance(2,15);
     turnLeft(135);
     driveStraightDistance(10,70);
+
+    DDRRPS();
+
+    Sleep(5.0);
+
     //driveStraightDistance(10,-30);
     float lightVal = 3.00;
     driveStraightDistance(360,-40);
