@@ -44,6 +44,7 @@ struct data{
     double expectedHeading;
     double error;
     double cdsVal;
+    bool light;
 };
 
 void resetCounts() {
@@ -51,7 +52,7 @@ void resetCounts() {
     right_encoder.ResetCounts();
 }
 void writeScreen(data printData){
-    LCD.Clear();
+    /*LCD.Clear();
     LCD.WriteRC(printData.leftEncoder,1,120);
     LCD.WriteRC(printData.rightEncoder,2,120);
     LCD.WriteRC(printData.leftSpeed,3,120);
@@ -69,7 +70,26 @@ void writeScreen(data printData){
     LCD.WriteRC(printData.error,10,120);
     LCD.WriteRC("CDS VAL: ", 11,0);
     LCD.WriteRC(printData.cdsVal,11,120);
+    */
+    LCD.SetBackgroundColor(WHITE);
+    LCD.SetFontColor(BLACK);
+    LCD.WriteRC(cds.Value(),0,0);
+    LCD.WriteRC(printData.light,1,0);
+    LCD.WriteRC(light,2,0);
+    if(printData.light) {
+        LCD.WriteRC("BLUEBLUEBLUE", 12, 5);
+    } else {
+        LCD.WriteRC("REDREDREDRED", 12, 5);
+    }
 
+}
+
+void upRamp() {
+    left_motor.SetPercent(40);
+    right_motor.SetPercent(35);
+    while(RPS.Y()>0);
+    left_motor.Stop();
+    right_motor.Stop();
 }
 
 void driveStraightDistance(double tenthsOfIn, int masterPower)
@@ -345,33 +365,77 @@ void initialize(){
 void DDRRPS () {
     float currX = RPS.X();
     float currY = RPS.Y();
+    float currH = RPS.Heading();
+    float time = TimeNow();
+    float smallLight = 3.3;
 
-    while(currX < DDRX-2.5) {
+    while(currX < DDRX) {
         currX = RPS.X();
         currY = RPS.Y();
+        currH = RPS.Heading();
+        time = TimeNow();
 
-        driveStraightDistance(5,-35);
+        driveStraightDistance(30,-35);
 
-        if(fabs((currY - DDRY)) > .25) {
-            if(currY > DDRY) {
-                turnLeft(.2);
-                driveStraightDistance(3,-15);
-                turnRight(.2);
+        if(fabs((currH - DDRHeading)) > 5) {
+            if(currH < DDRHeading) {
+                turnLeft(5);
             }
-            else {
-
-                turnRight(.2);
-                driveStraightDistance(3,-15);
-                turnLeft(.2);
+            if(currH > DDRHeading) {
+                turnRight(5);
             }
         }
+        if(currX > 20) {
+            float read = cds.Value();
+            if(read < smallLight) {
+                smallLight = read;
+            }
+        }
+        light = smallLight;
     }
+}
+
+void blue() {
+    driveStraightDistance(2.5,30);
+
+    while(fabs(light-cds.Value()) < .2) {
+        driveStraightDistance(5,30);
+        Sleep(.1);
+    }
+
+    driveStraightDistance(20,-35);
+    turnRight(90);
+    driveStraightDistance(70,-40);
+    Sleep(5.0);
+
+    turnRight(35);
+    upRamp();
+}
+
+void red() {
+    driveStraightDistance(30,35);
+
+    while(fabs(light-cds.Value()) < .2) {
+        driveStraightDistance(5,30);
+        Sleep(.1);
+    }
+
+    driveStraightDistance(10,-35);
+    turnRight(90);
+    driveStraightDistance(70,-40);
+    Sleep(5.0);
+
+    turnRight(45);
+    driveStraightDistance(70,35);
+    turnLeft(40);
+    upRamp();
 }
 
 int main(void)
 {
 
 
+    data printdata;
 
     initialize();
     currHeading = RPS.Heading();
@@ -388,25 +452,47 @@ int main(void)
 
     DDRRPS();
 
-    Sleep(5.0);
+    if(light < .6) {
+        printdata.light = false;
+        red();
+    } else {
+        printdata.light = true;
+        blue();
+    }
+    writeScreen(printdata);
 
+    //foosball?
+    //drive to the wall
+    driveStraightDistance(30,-30);
+    turnLeft(90);
+    driveStraightDistance(38,30);
+    foos_servo.SetDegree(176);
+    foos_servo.SetDegree(168);
+    Sleep(200);
+    left_motor.SetPercent(30);
+    right_motor.SetPercent(46);
+    Sleep(1.6);
+    left_motor.Stop();
+    right_motor.Stop();
+    left_encoder.ResetCounts();
+    right_encoder.ResetCounts();
+    Sleep(500);
+    //driveStraightDistance(80,35);
+    foos_servo.SetDegree(20);
+    /*
     //driveStraightDistance(10,-30);
     float lightVal = 3.00;
     driveStraightDistance(360,-40);
 
     driveStraightDistance(4,20);
 
-    data printdata;
     /*
     while(lightVal > 2.5){
         lightVal = cds.Value();
         driveStraightDistance(1,20);
-
         printdata.cdsVal = lightVal;
-
         writeScreen(printdata);
     }
- */
     driveStraightDistance(20,-40);
     if(true){
         driveStraightDistance(10,15);
@@ -478,7 +564,6 @@ int main(void)
 
 
   /*
-
   turnLeft(70);
   driveStraightDistance(70,50);
   //driveStraightDistance(10,-30);
@@ -489,7 +574,6 @@ int main(void)
   turnRight(90);
   driveStraightDistance(60,50);
   turnLeft(-90);
-
   driveStraightDistance(210,30);
   //turnBoth(270);
   //driveStraightDistance(40,20);
@@ -502,10 +586,7 @@ int main(void)
   driveStraightDistance(30,40);
   turnRight(40);
   driveStraightDistance(60,40);
-
   coin_servo.SetDegree(20);
-
-
 */
 
 
