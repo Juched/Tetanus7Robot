@@ -1,2 +1,2 @@
    text	   data	    bss	    dec	    hex	filename
-  50880	   3472	   5612	  59964	   ea3c	../RobotProject.elf
+  50884	   3472	   5616	  59972	   ea44	../RobotProject.elf
