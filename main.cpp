@@ -360,6 +360,8 @@ void DDRRPS () {
     float currH = RPS.Heading();
     float time = TimeNow();
     float smallLight = 3.3;
+    float val = 3.3;
+    data printData;
 
     while(currX < DDRX - 12) {
         currX = RPS.X();
@@ -367,7 +369,7 @@ void DDRRPS () {
         currH = RPS.Heading();
 
 
-        driveStraightDistance(50,-35);
+        driveStraightDistance(50,-50);
 
         if(fabs((currH - DDRHeading)) > 2) {
             if(currH < DDRHeading) {
@@ -379,7 +381,7 @@ void DDRRPS () {
         }
     }
     float prevErr = 0;
-   while(currX<DDRX){
+   while(currX<DDRX-2){
        currX = RPS.X();
        currY = RPS.Y();
        currH = RPS.Heading();
@@ -397,23 +399,26 @@ void DDRRPS () {
             }
         }
         Sleep(50);
-        driveStraightDistance(5,-15);
+        driveStraightDistance(5,-25);
+        val = cds.Value();
+        if(val<smallLight)
+            printData.cdsLight = cds.Value();
    }
-   while(fabs((currH - DDRHeading)) >.7) {
-       if(currH < DDRHeading) {
-           turnLeft(.3);
-       }
-       if(currH > DDRHeading) {
-           turnRight(.3);
-       }
-   }
-   if(fabs((currX - DDRX)) > .5){
-       if(currX - DDRX > 0){
-           driveStraightDistance(2,10);
-       }else{
-           driveStraightDistance(2,-10);
-       }
-   }
+//   while(fabs((currH - DDRHeading)) >.7) {
+//       if(currH < DDRHeading) {
+//           turnLeft(.3);
+//       }
+//       if(currH > DDRHeading) {
+//           turnRight(.3);
+//       }
+//   }
+//   if(fabs((currX - DDRX)) > .5){
+//       if(currX - DDRX > 0){
+//           driveStraightDistance(2,10);
+//       }else{
+//           driveStraightDistance(2,-10);
+//       }
+//   }
 
    ddrLight = cds.Value();
 
@@ -459,6 +464,22 @@ void red() {
     upRamp();
 }
 
+void lever() {
+    int degree = 0;
+    while(degree<=20) {
+        driveStraightDistance(10,30);
+        turnLeft(4);
+        degree += 4;
+    }
+}
+
+void stuckInCorner() {
+    //go back, squaring with lever slant
+    driveStraightDistance(40,-30);
+    //turn to final button
+    turnLeft(55);
+}
+
 int main(void)
 {
 
@@ -482,6 +503,8 @@ int main(void)
     driveStraightDistance(10,70);
 
     DDRRPS();
+    driveStraightDistance(10,-50);
+    /*
 
     if(ddrLight < .9) {
         printdata.cdsLight = ddrLight;
@@ -491,60 +514,8 @@ int main(void)
         printdata.cdsLight = ddrLight;
         writeScreen(printdata);
         blue();
-    }
+    }*/
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    /*
-    //foosball?
-    //drive to the wall
-    driveStraightDistance(30,-30);
-    turnLeft(90);
-    driveStraightDistance(38,30);
-    foos_servo.SetDegree(176);
-    foos_servo.SetDegree(168);
-    Sleep(200);
-    left_motor.SetPercent(30);
-    right_motor.SetPercent(46);
-    Sleep(1.6);
-    left_motor.Stop();
-    right_motor.Stop();
-    left_encoder.ResetCounts();
-    right_encoder.ResetCounts();
-    Sleep(500);
-    //driveStraightDistance(80,35);
-    foos_servo.SetDegree(20);
-    */
-    /*
-    //driveStraightDistance(10,-30);
-    float lightVal = 3.00;
-    driveStraightDistance(360,-40);
-
-    driveStraightDistance(4,20);
-
-    /*
-    while(lightVal > 2.5){
-        lightVal = cds.Value();
-        driveStraightDistance(1,20);
-        printdata.cdsVal = lightVal;
-        writeScreen(printdata);
-    }
-    driveStraightDistance(20,-40);
     if(true){
         driveStraightDistance(10,15);
         turnRightRPS(90);
@@ -578,16 +549,33 @@ int main(void)
             rampCheck = false;
         }
     }
+
+    //overshoot
+    driveStraightDistance(50,30);
+    //back up two inches
+    driveStraightDistance(30,-40);
+
+
     //drive to the wall
-    turnLeft(90);
-    driveStraightDistance(50,-50);
+    turnLeft(45);
+    driveStraightDistance(3,30);
+    turnLeft(45);
+
+    driveStraightDistance(2,-70);
+    left_encoder.ResetCounts();
+    right_encoder.ResetCounts();
+
+    //square
+    driveStraightDistance(85,-40);
+
+    //foosball
     driveStraightDistance(38,30);
-    foos_servo.SetDegree(176);
-    foos_servo.SetDegree(168);
+    foos_servo.SetDegree(178);
+    foos_servo.SetDegree(173);
     Sleep(200);
     left_motor.SetPercent(30);
     right_motor.SetPercent(46);
-    Sleep(1.6);
+    Sleep(.5);
     left_motor.Stop();
     right_motor.Stop();
     left_encoder.ResetCounts();
@@ -595,64 +583,55 @@ int main(void)
     Sleep(500);
     //driveStraightDistance(80,35);
     foos_servo.SetDegree(20);
-    driveStraightDistance(200,-40);
 
+    driveStraightDistance(45,35);
 
+    //slow turn around the lever
+    lever();
+    stuckInCorner();
 
-    //driveStraightDistance(50,30);
+    //return into RPS
+    while(RPS.Y()<0) {
+        driveStraightDistance(10,35);
+        Sleep(.3);
+    }
+
+    //lign up with coin
+    while(fabs(RPS.Heading() - 90) > 5) {
+        turnLeft(4);
+        Sleep(.3);
+    }
+
+    //drive until next to coin slot; about RPS 15
+    while(RPS.X() - 15 < -3) {
+        driveStraightDistance(10,35);
+        Sleep(.3);
+    }
+    while(RPS.X() - 15 > 3) {
+        driveStraightDistance(10,35);
+        Sleep(.3);
+    }
+
+    //turn to coin
+    turnRight(90);
+    driveStraightDistance(40,35);
+    coin_servo.SetDegree(coinServoMax);
+
+    //back up and drive to x<5
+    driveStraightDistance(20,-35);
+    turnRight(90);
+    while(RPS.X() > 5) {
+        driveStraightDistance(10, 35);
+        Sleep(.1);
+    }
+
+    //turn towards final button
     turnLeft(90);
-    driveStraightDistance(30,40);
-    turnLeft(20);
-    driveStraightDistance(400,50);
-    turnLeft(-65);
-    driveStraightDistance(400,50);
-
-
-
-
-
-
-
-
-  /*
-  turnLeft(70);
-  driveStraightDistance(70,50);
-  //driveStraightDistance(10,-30);
-  turnRight(25);
-  driveStraightDistance(200,60);
-  driveStraightDistance(50,-20);
-  driveStraightDistance(40,30);
-  turnRight(90);
-  driveStraightDistance(60,50);
-  turnLeft(-90);
-  driveStraightDistance(210,30);
-  //turnBoth(270);
-  //driveStraightDistance(40,20);
-  coin_servo.SetDegree(122);
-  Sleep(1.0);
-  driveStraightDistance(60,-30);
-  turnBoth(140);
-  driveStraightDistance(30,50);
-  turnBoth(65);
-  driveStraightDistance(30,40);
-  turnRight(40);
-  driveStraightDistance(60,40);
-  coin_servo.SetDegree(20);
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    right_motor.SetPercent(50);
+    left_motor.SetPercent(50);
+    while(RPS.Y() > 10);
+    right_motor.Stop();
+    left_motor.Stop();
 
 
 
