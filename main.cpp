@@ -15,7 +15,7 @@ DigitalEncoder left_encoder(FEHIO::P0_7);
 FEHServo coin_servo(FEHServo::Servo0);
 FEHServo foos_servo(FEHServo::Servo1);
 
-data printData;
+
 float light = 1.7 ;
 float smallLight;
 float ddrLight ;
@@ -51,6 +51,8 @@ struct data{
     double error;
     double cdsVal;
     float cdsLight;};
+
+data printData;
 
 void resetCounts() {
     left_encoder.ResetCounts();
@@ -101,9 +103,9 @@ void driveStraightDistance(double tenthsOfIn, int masterPower)
     //veering off course at the start of the function.
     double slavePower = masterPower;
     if(masterPower > 0){
-        slavePower = masterPower + 3;
+        slavePower = masterPower + 2;
     }else{
-        slavePower = masterPower - 5;
+        slavePower = masterPower - 2;
     }
 
 
@@ -112,9 +114,9 @@ void driveStraightDistance(double tenthsOfIn, int masterPower)
     int leftPrior = 0;
     int rightPrior = 0;
 
-    double kp = 30;
+    double kp = 160;
     //double ki;
-    double kd = 0.5 ; //18
+    double kd = 0.2 ; //18
 
     left_encoder.ResetCounts();
     right_encoder.ResetCounts();
@@ -266,14 +268,14 @@ void turnLeftRPS(float angle){
     while((adjustedAngle > (RPS.Heading() +1.5))||(adjustedAngle < (RPS.Heading()-1.5))){
         if(adjustedAngle > (RPS.Heading()+1)){
             turnLeft(.5);
-            printdata.heading = RPS.Heading();
-            printdata.expectedHeading = adjustedAngle;
-            writeScreen(printdata);
+            printData.heading = RPS.Heading();
+            printData.expectedHeading = adjustedAngle;
+            writeScreen(printData);
         }else if(adjustedAngle < (RPS.Heading() -1)){
             turnLeft(-.5);
-            printdata.heading = RPS.Heading();
-            printdata.expectedHeading = adjustedAngle;
-            writeScreen(printdata);
+            printData.heading = RPS.Heading();
+            printData.expectedHeading = adjustedAngle;
+            writeScreen(printData);
         }
         Sleep(300);
     }
@@ -294,14 +296,14 @@ void turnRightRPS(float angle){
     while((adjustedAngle> RPS.Heading() +1.5)||(adjustedAngle<RPS.Heading()-1.5)){
         if(adjustedAngle > (RPS.Heading()+1)){
             turnRight(-.5);
-            printdata.heading = RPS.Heading();
-            printdata.expectedHeading = adjustedAngle;
-            writeScreen(printdata);
+            printData.heading = RPS.Heading();
+            printData.expectedHeading = adjustedAngle;
+            writeScreen(printData);
         }else if(adjustedAngle < (RPS.Heading() -1)){
             turnRight(.5);
-            printdata.heading = RPS.Heading();
-            printdata.expectedHeading = adjustedAngle;
-            writeScreen(printdata);
+            printData.heading = RPS.Heading();
+            printData.expectedHeading = adjustedAngle;
+            writeScreen(printData);
         }
         Sleep(300);
     }
@@ -446,7 +448,7 @@ void DDRRPS () {
     float val = 3.3;
 
 
-    driveStraightDistance(20, -70);
+    driveStraightDistance(20, -60);
     float angAdj = RPS.Heading() - DDRHeading;
 
     rotateRPS(RPS.Heading(), DDRHeading);
@@ -509,20 +511,22 @@ void blue() {
 }
 
 void red() {
-    driveStraightDistance(50,35);
+    driveStraightDistance(75,35);
 
-    turnRight(90);
+    turnBoth(90);
     driveStraightDistance(70,-40);
-    left_motor.SetPercent(-20);
-    right_motor.SetPercent(-20);
-    Sleep(5.0);
+    left_motor.SetPercent(-35);
+    right_motor.SetPercent(-35);
+    Sleep(5.3);
     left_motor.Stop();
     right_motor.Stop();
 
 
     turnRight(45);
     driveStraightDistance(70,35);
-    turnLeft(40);
+    //Sleep(300);
+    //currHeading = RPS.Heading();
+    turnRight(-20);
     upRamp();
 }
 
@@ -530,8 +534,8 @@ void lever() {
     int degree = 0;
     while(degree<=20) {
         driveStraightDistance(10,30);
-        turnLeft(4);
-        degree += 4;
+        turnLeft(3);
+        degree += 3;
     }
 }
 
@@ -572,7 +576,7 @@ int main(void)
 
 
 
-    if(smallLight < .9) {
+    if(smallLight < .7) {
         printData.cdsLight = smallLight;
         writeScreen(printData);
         red();
@@ -610,25 +614,32 @@ int main(void)
     //foosball
     driveStraightDistance(38,25);
     foos_servo.SetDegree(178);
-    foos_servo.SetDegree(173);
+    foos_servo.SetDegree(175);
     Sleep(200);
     left_motor.SetPercent(28);
     right_motor.SetPercent(46);
-    Sleep(1.3);
+    Sleep(1.5);
     left_motor.Stop();
     right_motor.Stop();
     left_encoder.ResetCounts();
     right_encoder.ResetCounts();
-    Sleep(500);
+    Sleep(300);
     //driveStraightDistance(80,35);
     foos_servo.SetDegree(20);
     //end foos
     driveStraightDistance(30,-35);
+    //foos_servo.SetDegree(166);
+    driveStraightDistance(30,35);
+   // foos_servo.SetDegree(20);
+    //Sleep(200);
     //drive to lever area
-    driveStraightDistance(45,35);
-
+    driveStraightDistance(55,35);
+    turnLeft(35);
+    //turnRight(-5);
+    driveStraightDistance(60,35);
+    turnLeft(10);
     //slow turn around the lever
-    lever();
+    //lever();
     stuckInCorner();
 
     //return into RPS
@@ -647,10 +658,12 @@ int main(void)
     turnLeft(-90);
     driveStraightDistance(120,30);
 
-    turnRight(-90);
+    turnRight(-65);
+    driveStraightDistance(40,55);
+    turnRight(-10);
     driveStraightDistance(200,55);
     turnRight(15);
-    driveStraightDistance(200,30);
+    driveStraightDistance(200,50);
 
 
 
