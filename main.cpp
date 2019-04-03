@@ -84,8 +84,8 @@ void writeScreen(data printData){
 }
 
 void upRamp() {
-    left_motor.SetPercent(55);
-    right_motor.SetPercent(47);
+    left_motor.SetPercent(75);
+    right_motor.SetPercent(70);
     while((RPS.Y() >=  -1));
     left_motor.Stop();
     right_motor.Stop();
@@ -105,7 +105,7 @@ void driveStraightDistance(double tenthsOfIn, int masterPower)
     if(masterPower > 0){
         slavePower = masterPower + 2;
     }else{
-        slavePower = masterPower - 2;
+        slavePower = masterPower - 1;
     }
 
 
@@ -511,12 +511,12 @@ void blue() {
 }
 
 void red() {
-    driveStraightDistance(75,35);
+    driveStraightDistance(90,35);
 
     turnBoth(90);
     driveStraightDistance(70,-40);
-    left_motor.SetPercent(-35);
-    right_motor.SetPercent(-35);
+    left_motor.SetPercent(-50);
+    right_motor.SetPercent(-45);
     Sleep(5.3);
     left_motor.Stop();
     right_motor.Stop();
@@ -587,37 +587,38 @@ int main(void)
     }
 
     LCD.Clear();
-    LCD.WriteRC("END OF DDR",0,0);
-    Sleep(300);
+    //LCD.WriteRC("END OF DDR",0,0);
+    //Sleep(300);
     //turnRight(2);
     //Lined up at the bottom of ramp
 
     //overshoot
 
-    driveStraightDistance(100,30);
+    driveStraightDistance(100,55);
     //back up two inches
     driveStraightDistance(30,-40);
 
 
     //drive to the wall
     turnLeft(45);
-    driveStraightDistance(13,30);
-    turnLeft(45);
+    driveStraightDistance(7,45);
+    turnLeft(38);
     //jolt back towards wall (served as a slight turn when wheels were not on center)
     driveStraightDistance(2,-70);
     left_encoder.ResetCounts();
     right_encoder.ResetCounts();
 
     //square
-    driveStraightDistance(60,-55);
+    driveStraightDistance(60,-50);
 
     //foosball
     driveStraightDistance(38,25);
     foos_servo.SetDegree(178);
-    foos_servo.SetDegree(175);
     Sleep(200);
-    left_motor.SetPercent(28);
-    right_motor.SetPercent(46);
+    foos_servo.SetDegree(176);
+    Sleep(200);
+    left_motor.SetPercent(26);
+    right_motor.SetPercent(50);
     Sleep(1.5);
     left_motor.Stop();
     right_motor.Stop();
@@ -627,16 +628,18 @@ int main(void)
     //driveStraightDistance(80,35);
     foos_servo.SetDegree(20);
     //end foos
-    driveStraightDistance(30,-35);
+
     //foos_servo.SetDegree(166);
     driveStraightDistance(30,35);
    // foos_servo.SetDegree(20);
     //Sleep(200);
     //drive to lever area
-    driveStraightDistance(55,35);
+    driveStraightDistance(53,35);
+    turnRight(-4);
+
     turnLeft(35);
     //turnRight(-5);
-    driveStraightDistance(60,35);
+    driveStraightDistance(80,45);
     turnLeft(10);
     //slow turn around the lever
     //lever();
