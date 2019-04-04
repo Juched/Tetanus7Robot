@@ -84,8 +84,8 @@ void writeScreen(data printData){
 }
 
 void upRamp() {
-    left_motor.SetPercent(75);
-    right_motor.SetPercent(70);
+    left_motor.SetPercent(85);
+    right_motor.SetPercent(80);
     while((RPS.Y() >=  -1));
     left_motor.Stop();
     right_motor.Stop();
@@ -458,7 +458,7 @@ void DDRRPS () {
 
 
 
-        driveStraightDistance(50,-40);
+        driveStraightDistance(50,-50);
 
         rotateRPS(RPS.Heading(), DDRHeading);
         currX = RPS.X();
@@ -470,7 +470,7 @@ void DDRRPS () {
 
 
 
-    driveStraightDistance(30, -40);
+    driveStraightDistance(30, -50);
 
     left_encoder.ResetCounts();
 
@@ -492,7 +492,7 @@ void DDRRPS () {
     left_encoder.ResetCounts();
     right_encoder.ResetCounts();
 
-    driveStraightDistance(30, -40);
+    driveStraightDistance(30, -60);
 
 
 
@@ -505,7 +505,13 @@ void DDRRPS () {
 void blue() {
     driveStraightDistance(10,15);
     turnRightRPS(90);
-    driveStraightDistance(400,-30);
+
+    left_motor.SetPercent(-50);
+    right_motor.SetPercent(-45);
+    Sleep(5.3);
+    left_motor.Stop();
+    right_motor.Stop();
+
     driveStraightDistance(80,40);
     upRamp();
 }
@@ -601,8 +607,8 @@ int main(void)
 
     //drive to the wall
     turnLeft(45);
-    driveStraightDistance(7,45);
-    turnLeft(38);
+    driveStraightDistance(6.5,45);
+    turnLeft(37);
     //jolt back towards wall (served as a slight turn when wheels were not on center)
     driveStraightDistance(2,-70);
     left_encoder.ResetCounts();
@@ -615,9 +621,9 @@ int main(void)
     driveStraightDistance(38,25);
     foos_servo.SetDegree(178);
     Sleep(200);
-    foos_servo.SetDegree(176);
+    foos_servo.SetDegree(172);
     Sleep(200);
-    left_motor.SetPercent(26);
+    left_motor.SetPercent(25);
     right_motor.SetPercent(50);
     Sleep(1.5);
     left_motor.Stop();
@@ -634,38 +640,39 @@ int main(void)
    // foos_servo.SetDegree(20);
     //Sleep(200);
     //drive to lever area
-    driveStraightDistance(53,35);
-    turnRight(-4);
+    driveStraightDistance(51,35);
+    turnRight(-6);
 
     turnLeft(35);
     //turnRight(-5);
-    driveStraightDistance(80,45);
-    turnLeft(10);
+    driveStraightDistance(70,45);
+    driveStraightDistance(37,-30);
+    turnLeft(65);
     //slow turn around the lever
     //lever();
-    stuckInCorner();
+    //stuckInCorner();
 
     //return into RPS
     while(RPS.Y()<0) {
-        driveStraightDistance(10,35);
+        driveStraightDistance(10,45);
         Sleep(300);
     }
-    driveStraightDistance(30,35);
+    driveStraightDistance(18,55);
 
     turnLeft(90);
-    turnRight(90);
-    driveStraightDistance(60,35);
+    turnRight(93);
+    driveStraightDistance(50,55);
     coin_servo.SetDegree(150);
     driveStraightDistance(20,70);
-    driveStraightDistance(20,-30);
+    driveStraightDistance(20,-50);
     turnLeft(-90);
-    driveStraightDistance(120,30);
+    driveStraightDistance(120,50);
 
     turnRight(-65);
     driveStraightDistance(40,55);
-    turnRight(-10);
-    driveStraightDistance(200,55);
-    turnRight(15);
+    turnRight(-12);
+    driveStraightDistance(150,55);
+    //turnRight(15);
     driveStraightDistance(200,50);
 
 
