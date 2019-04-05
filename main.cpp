@@ -464,30 +464,51 @@ void DDRRPS () {
         currX = RPS.X();
         currY = RPS.Y();
         currH = RPS.Heading();
-        Sleep(300);
+        Sleep(200);
 
     }
 
 
 
-    driveStraightDistance(30, -50);
+    //driveStraightDistance(30, -50);
+    Sleep(200);
+    if(RPS.Y() > DDRY){
+        right_encoder.ResetCounts();
 
-    left_encoder.ResetCounts();
+        left_motor.SetPercent(8);
+        right_motor.SetPercent(20);
 
-    left_motor.SetPercent(20);
-    right_motor.SetPercent(20);
-
-    while(left_encoder.Counts() < 50 ){
-        if(smallLight > cds.Value()){
-            smallLight = cds.Value();
-            LCD.Clear();
-            printData.cdsLight = smallLight;
-            writeScreen(printData);
+        while(right_encoder.Counts() < 70 ){
+            if(smallLight > cds.Value()){
+                smallLight = cds.Value();
+                LCD.Clear();
+                printData.cdsLight = smallLight;
+                writeScreen(printData);
+            }
         }
-    }
 
-    left_motor.Stop();
-    right_motor.Stop();
+        left_motor.Stop();
+        right_motor.Stop();
+    }else{
+
+        left_encoder.ResetCounts();
+
+        left_motor.SetPercent(20);
+        right_motor.SetPercent(8);
+
+        while(left_encoder.Counts() < 70 ){
+            if(smallLight > cds.Value()){
+                smallLight = cds.Value();
+                LCD.Clear();
+                printData.cdsLight = smallLight;
+                writeScreen(printData);
+            }
+        }
+
+        left_motor.Stop();
+        right_motor.Stop();
+
+    }
 
     left_encoder.ResetCounts();
     right_encoder.ResetCounts();
@@ -505,10 +526,11 @@ void DDRRPS () {
 void blue() {
     driveStraightDistance(10,15);
     turnRightRPS(90);
+    driveStraightDistance(70,-40);
 
-    left_motor.SetPercent(-50);
-    right_motor.SetPercent(-45);
-    Sleep(5.3);
+    left_motor.SetPercent(-40);
+    right_motor.SetPercent(-35);
+    Sleep(5.5);
     left_motor.Stop();
     right_motor.Stop();
 
@@ -517,12 +539,12 @@ void blue() {
 }
 
 void red() {
-    driveStraightDistance(90,35);
+    driveStraightDistance(88,35);
 
     turnBoth(90);
     driveStraightDistance(70,-40);
-    left_motor.SetPercent(-50);
-    right_motor.SetPercent(-45);
+    left_motor.SetPercent(-70);
+    right_motor.SetPercent(-64);
     Sleep(5.3);
     left_motor.Stop();
     right_motor.Stop();
@@ -582,7 +604,7 @@ int main(void)
 
 
 
-    if(smallLight < .7) {
+    if(smallLight < .55) {
         printData.cdsLight = smallLight;
         writeScreen(printData);
         red();
@@ -630,14 +652,14 @@ int main(void)
     right_motor.Stop();
     left_encoder.ResetCounts();
     right_encoder.ResetCounts();
-    Sleep(300);
+    Sleep(100);
     //driveStraightDistance(80,35);
     foos_servo.SetDegree(20);
     //end foos
 
     //foos_servo.SetDegree(166);
     driveStraightDistance(30,35);
-   // foos_servo.SetDegree(20);
+    // foos_servo.SetDegree(20);
     //Sleep(200);
     //drive to lever area
     driveStraightDistance(51,35);
@@ -645,22 +667,29 @@ int main(void)
 
     turnLeft(35);
     //turnRight(-5);
-    driveStraightDistance(70,45);
-    driveStraightDistance(37,-30);
-    turnLeft(65);
+    driveStraightDistance(65,45);
+    driveStraightDistance(1,-40);
+
+    turnLeft(45);
+
+
     //slow turn around the lever
     //lever();
     //stuckInCorner();
 
     //return into RPS
     while(RPS.Y()<0) {
-        driveStraightDistance(10,45);
-        Sleep(300);
+        driveStraightDistance(10,55);
+
     }
-    driveStraightDistance(18,55);
+
+    rotateRPS(RPS.Heading(), 0);
+
 
     turnLeft(90);
-    turnRight(93);
+    driveStraightDistance(1,30);
+
+    turnRight(90);
     driveStraightDistance(50,55);
     coin_servo.SetDegree(150);
     driveStraightDistance(20,70);
@@ -671,9 +700,16 @@ int main(void)
     turnRight(-65);
     driveStraightDistance(40,55);
     turnRight(-12);
-    driveStraightDistance(150,55);
+    driveStraightDistance(150,70);
     //turnRight(15);
-    driveStraightDistance(200,50);
+    float lastTurn = initHeading + 180;
+
+    if(lastTurn > 360){
+        lastTurn = lastTurn - 360;
+    }
+    //turnRight(20);
+    //rotateRPS(RPS.Heading(), lastTurn);
+    driveStraightDistance(200,90);
 
 
 
